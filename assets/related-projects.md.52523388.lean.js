@@ -1,0 +1,1 @@
+import{_ as e,c as t,o as r,a}from"./app.2504bd8b.js";const u='{"title":"Related projects","description":"","frontmatter":{"sidebar":false},"headers":[],"relativePath":"related-projects.md","lastUpdated":1643944876282}',n={},o=a("",3),i=[o];function d(p,s,g,l,h,c){return r(),t("div",null,i)}var _=e(n,[["render",d]]);export{u as __pageData,_ as default};
