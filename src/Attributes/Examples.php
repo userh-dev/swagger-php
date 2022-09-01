@@ -14,14 +14,14 @@ use OpenApi\Generator;
 class Examples extends \OpenApi\Annotations\Examples
 {
     /**
-     * @param array<string,string>|null $x
-     * @param Attachable[]|null         $attachables
+     * @param array<string,mixed>|null $x
+     * @param Attachable[]|null        $attachables
      */
     public function __construct(
         ?string $example = null,
         ?string $summary = null,
         ?string $description = null,
-        string|array|null $value = null,
+        int|string|array|null $value = null,
         ?string $externalValue = null,
         string|object|null $ref = null,
         // annotation

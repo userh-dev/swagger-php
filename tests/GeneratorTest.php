@@ -6,7 +6,6 @@
 
 namespace OpenApi\Tests;
 
-use OpenApi\Analysers\TokenAnalyser;
 use OpenApi\Analysis;
 use OpenApi\Generator;
 use OpenApi\Processors\OperationId;
@@ -19,7 +18,7 @@ class GeneratorTest extends OpenApiTestCase
         $sourceDir = $this->example('swagger-spec/petstore-simple');
 
         yield 'dir-list' => [$sourceDir, [$sourceDir]];
-        yield 'file-list' => [$sourceDir, ["$sourceDir/SimplePet.php", "$sourceDir/SimplePetsController.php", "$sourceDir/api.php"]];
+        yield 'file-list' => [$sourceDir, ["$sourceDir/SimplePet.php", "$sourceDir/SimplePetsController.php", "$sourceDir/OpenApiSpec.php"]];
         yield 'finder' => [$sourceDir, Util::finder($sourceDir)];
         yield 'finder-list' => [$sourceDir, [Util::finder($sourceDir)]];
     }
@@ -30,17 +29,27 @@ class GeneratorTest extends OpenApiTestCase
     public function testScan(string $sourceDir, iterable $sources): void
     {
         $openapi = (new Generator())
-            ->setAnalyser(new TokenAnalyser())
+            ->setAnalyser($this->getAnalyzer())
             ->generate($sources);
 
         $this->assertSpecEquals(file_get_contents(sprintf('%s/%s.yaml', $sourceDir, basename($sourceDir))), $openapi);
     }
 
+    public function testScanInvalidSource(): void
+    {
+        $this->assertOpenApiLogEntryContains('Skipping invalid source: /tmp/__swagger_php_does_not_exist__');
+        $this->assertOpenApiLogEntryContains('Required @OA\Info() not found');
+        $this->assertOpenApiLogEntryContains('Required @OA\PathItem() not found');
+
+        (new Generator($this->getTrackingLogger()))
+            ->setAnalyser($this->getAnalyzer())
+            ->generate(['/tmp/__swagger_php_does_not_exist__']);
+    }
+
     public function processorCases(): iterable
     {
         return [
-            [new OperationId(false), false],
-            [new OperationId(true), true],
+            [new OperationId(), true],
             [new class(false) extends OperationId {
             }, false],
         ];
@@ -49,7 +58,7 @@ class GeneratorTest extends OpenApiTestCase
     /**
      * @dataProvider processorCases
      */
-    public function testUpdateProcessor($p, $expected): void
+    public function testUpdateProcessor($p, bool $expected): void
     {
         $generator = (new Generator())
             ->updateProcessor($p);
@@ -96,5 +105,57 @@ class GeneratorTest extends OpenApiTestCase
         $generator->removeProcessor($processor);
 
         $this->assertEquals($processors, $generator->getProcessors());
+    }
+
+    public function testRemoveProcessorNotFound(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        (new Generator())->removeProcessor(function () {
+        });
+    }
+
+    protected function assertOperationIdHash(Generator $generator, bool $expected): void
+    {
+        foreach ($generator->getProcessors() as $processor) {
+            if ($processor instanceof OperationId) {
+                $this->assertEquals($expected, $processor->isHash());
+            }
+        }
+    }
+
+    public function configCases(): iterable
+    {
+        return [
+            'default' => [[], true],
+            'nested' => [['operationId' => ['hash' => false]], false],
+            'dots-kv' => [['operationId.hash' => false], false],
+            'dots-string' => [['operationId.hash=false'], false],
+        ];
+    }
+
+    /**
+     * @dataProvider configCases
+     */
+    public function testConfig(array $config, bool $expected)
+    {
+        $generator = new Generator();
+        $this->assertOperationIdHash($generator, true);
+
+        $generator->setConfig($config);
+        $this->assertOperationIdHash($generator, $expected);
+    }
+
+    public function testCallableProcessor(): void
+    {
+        $generator = new Generator();
+        // not the default
+        $operationId = new OperationId(false);
+        $generator->addProcessor(function (Analysis $analysis) use ($operationId) {
+            $operationId($analysis);
+        });
+
+        $this->assertOperationIdHash($generator, true);
+        $this->assertFalse($operationId->isHash());
     }
 }

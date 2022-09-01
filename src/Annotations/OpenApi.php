@@ -13,7 +13,7 @@ use OpenApi\Util;
 /**
  * This is the root document object for the API specification.
  *
- * A  "OpenApi Object": https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/versions/3.0.md#openapi-object
+ * @see [OAI OpenApi Object](https://github.com/OAI/OpenAPI-Specification/blob/OpenAPI.next/versions/3.0.md#openapi-object)
  *
  * @Annotation
  */
@@ -26,8 +26,12 @@ class OpenApi extends AbstractAnnotation
 
     /**
      * The semantic version number of the OpenAPI Specification version that the OpenAPI document uses.
+     *
      * The openapi field should be used by tooling specifications and clients to interpret the OpenAPI document.
-     * This is not related to the API info.version string.
+     *
+     * A version specified via `Generator::setVersion()` will overwrite this value.
+     *
+     * This is not related to the API info::version string.
      *
      * @var string
      */
@@ -41,9 +45,9 @@ class OpenApi extends AbstractAnnotation
     public $info = Generator::UNDEFINED;
 
     /**
-     * An array of Server Objects, which provide connectivity information to a target server.
-     * If the servers property is not provided, or is an empty array, the default value would be a Server Object with a
-     * url value of /.
+     * An array of <code>@Server</code> objects, which provide connectivity information to a target server.
+     *
+     * If not provided, or is an empty array, the default value would be a Server Object with an url value of <code>/</code>.
      *
      * @var Server[]
      */
@@ -65,6 +69,7 @@ class OpenApi extends AbstractAnnotation
 
     /**
      * Lists the required security schemes to execute this operation.
+     *
      * The name used for each property must correspond to a security scheme declared
      * in the Security Schemes under the Components Object.
      * Security Requirement Objects that contain multiple schemes require that
@@ -81,6 +86,7 @@ class OpenApi extends AbstractAnnotation
 
     /**
      * A list of tags used by the specification with additional metadata.
+     *
      * The order of the tags can be used to reflect on their order by the parsing tools.
      * Not all tags that are used by the Operation Object must be declared.
      * The tags that are not declared may be organized randomly or based on the tools' logic.
@@ -128,9 +134,9 @@ class OpenApi extends AbstractAnnotation
     /**
      * @inheritdoc
      */
-    public function validate(array $parents = null, array $skip = null, string $ref = ''): bool
+    public function validate(array $stack = null, array $skip = null, string $ref = '', $context = null): bool
     {
-        if ($parents !== null || $skip !== null || $ref !== '') {
+        if ($stack !== null || $skip !== null || $ref !== '') {
             $this->_context->logger->warning('Nested validation for ' . $this->identity() . ' not allowed');
 
             return false;
@@ -142,7 +148,7 @@ class OpenApi extends AbstractAnnotation
             return false;
         }
 
-        return parent::validate([], [], '#');
+        return parent::validate([], [], '#', new \stdClass());
     }
 
     /**
@@ -182,6 +188,8 @@ class OpenApi extends AbstractAnnotation
 
     /**
      * Recursive helper for ref().
+     *
+     * @param array|AbstractAnnotation $container
      */
     private static function resolveRef(string $ref, string $resolved, $container, array $mapping)
     {
@@ -200,7 +208,7 @@ class OpenApi extends AbstractAnnotation
                 throw new \Exception('$ref "' . $ref . '" not found');
             }
             if ($slash === false) {
-                return $container->$property;
+                return $container->{$property};
             }
             $mapping = [];
             if ($container instanceof AbstractAnnotation) {
@@ -211,7 +219,7 @@ class OpenApi extends AbstractAnnotation
                 }
             }
 
-            return self::resolveRef($ref, $unresolved, $container->$property, $mapping);
+            return self::resolveRef($ref, $unresolved, $container->{$property}, $mapping);
         } elseif (is_array($container)) {
             if (array_key_exists($property, $container)) {
                 return self::resolveRef($ref, $unresolved, $container[$property], []);

@@ -1,12 +1,12 @@
 [![Build Status](https://img.shields.io/github/workflow/status/zircote/swagger-php/build?style=flat-square)](https://github.com/zircote/swagger-php/actions?query=workflow:build)
 [![Total Downloads](https://img.shields.io/packagist/dt/zircote/swagger-php.svg?style=flat-square)](https://packagist.org/packages/zircote/swagger-php)
-[![License](https://img.shields.io/badge/license-Apache2.0-blue.svg?style=flat-square)](LICENSE-2.0.txt)
+[![License](https://img.shields.io/badge/license-Apache2.0-blue.svg?style=flat-square)](LICENSE)
 
 # swagger-php
 
 Generate interactive [OpenAPI](https://www.openapis.org) documentation for your RESTful API using [doctrine annotations](https://www.doctrine-project.org/projects/doctrine-annotations/en/latest/index.html).
 
-For a full list of supported annotations, please have look at the [`OpenApi\Annotations` namespace](src/Annotations) or the [documentation website](https://zircote.github.io/swagger-php/Supported-annotations.html).
+For a full list of supported annotations, please have look at the [`OpenApi\Annotations` namespace](src/Annotations) or the [documentation website](https://zircote.github.io/swagger-php/guide/annotations.html).
 
 ## Features
 
@@ -24,6 +24,10 @@ By default the spec will be in version `3.0.0`. The command line option `--versi
 to `3.1.0`.
 
 Programmatically, the method `Generator::setVersion()` can be used to change the version.
+
+## Requirements
+
+`swagger-php` requires at least PHP 7.2 for annotations and PHP 8.1 for using attributes.
 
 ## Installation (with [Composer](https://getcomposer.org))
 
@@ -67,7 +71,7 @@ $openapi = \OpenApi\Generator::scan(['/path/to/project']);
 header('Content-Type: application/x-yaml');
 echo $openapi->toYaml();
 ```
-Documentation of how to use the `Generator` class can be found in the [Generator Migration](https://zircote.github.io/swagger-php/Generator-migration.html) guide.
+Documentation of how to use the `Generator` class can be found in the [Generator reference](https://zircote.github.io/swagger-php/reference/generator).
 
 ### Usage from the Command Line Interface
 
@@ -115,7 +119,7 @@ docker run -v "$PWD":/app -it tico/swagger-php --help
 Feel free to submit [Github Issues](https://github.com/zircote/swagger-php/issues)
 or pull requests.
 
-The documentation website is build from the [docs](docs/) folder with [vuepress](https://vuepress.vuejs.org).
+The documentation website is build from the [docs](docs/) folder with [vitepress](https://vitepress.vuejs.org).
 
 Make sure pull requests pass [PHPUnit](https://phpunit.de/)
 and [PHP-CS-Fixer](https://github.com/FriendsOfPHP/PHP-CS-Fixer) (PSR-2) tests.
@@ -128,6 +132,11 @@ composer test
 ### Running unit tests only:
 ```bash
 ./bin/phpunit
+```
+
+### Regenerate annotation/attribute reference markup docs
+```bash
+composer docs:refgen
 ```
 
 ### Running linting only:

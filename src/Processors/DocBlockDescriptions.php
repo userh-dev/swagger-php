@@ -8,6 +8,10 @@ namespace OpenApi\Processors;
 
 use OpenApi\Analysis;
 use OpenApi\Annotations\AbstractAnnotation;
+use OpenApi\Annotations\Operation;
+use OpenApi\Annotations\Parameter;
+use OpenApi\Annotations\Property;
+use OpenApi\Annotations\Schema;
 use OpenApi\Generator;
 
 /**
@@ -18,6 +22,8 @@ use OpenApi\Generator;
  */
 class DocBlockDescriptions
 {
+    use Concerns\DocblockTrait;
+
     /**
      * Checks if the annotation has a summary and/or description property
      * and uses the text in the comment block (above the annotations) as summary and/or description.
@@ -32,15 +38,18 @@ class DocBlockDescriptions
                 // only annotations with context
                 continue;
             }
-            if (!$annotation->isRoot()) {
+
+            if (!$this->isRoot($annotation)) {
                 // only top-level annotations
                 continue;
             }
+
             $hasSummary = property_exists($annotation, 'summary');
             $hasDescription = property_exists($annotation, 'description');
             if (!$hasSummary && !$hasDescription) {
                 continue;
             }
+
             if ($hasSummary && $hasDescription) {
                 $this->summaryAndDescription($annotation);
             } elseif ($hasDescription) {
@@ -49,7 +58,10 @@ class DocBlockDescriptions
         }
     }
 
-    private function description($annotation): void
+    /**
+     * @param Operation|Property|Parameter|Schema $annotation
+     */
+    protected function description(AbstractAnnotation $annotation): void
     {
         if (!Generator::isDefault($annotation->description)) {
             if ($annotation->description === null) {
@@ -58,10 +70,14 @@ class DocBlockDescriptions
 
             return;
         }
-        $annotation->description = $annotation->_context->phpdocContent();
+
+        $annotation->description = $this->extractContent($annotation->_context->comment);
     }
 
-    private function summaryAndDescription($annotation): void
+    /**
+     * @param Operation|Property|Parameter|Schema $annotation
+     */
+    protected function summaryAndDescription(AbstractAnnotation $annotation): void
     {
         $ignoreSummary = !Generator::isDefault($annotation->summary);
         $ignoreDescription = !Generator::isDefault($annotation->description);
@@ -77,12 +93,12 @@ class DocBlockDescriptions
             return;
         }
         if ($ignoreSummary) {
-            $annotation->description = $annotation->_context->phpdocContent();
+            $annotation->description = $this->extractContent($annotation->_context->comment);
         } elseif ($ignoreDescription) {
-            $annotation->summary = $annotation->_context->phpdocContent();
+            $annotation->summary = $this->extractContent($annotation->_context->comment);
         } else {
-            $annotation->summary = $annotation->_context->phpdocSummary();
-            $annotation->description = $annotation->_context->phpdocDescription();
+            $annotation->summary = $this->extractSummary($annotation->_context->comment);
+            $annotation->description = $this->extractDescription($annotation->_context->comment);
         }
     }
 }

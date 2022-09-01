@@ -6,8 +6,6 @@
 
 namespace OpenApi\Tests\Fixtures\PHP;
 
-use OpenApi\Annotations\Info;
-
 /**
  * @OA\Info(title="Foobar", version="1.0")
  */
@@ -23,7 +21,8 @@ class AnonymousFunctions
     protected function query()
     {
         return new class() {
-            public function leftJoin(string $foo, callable $callback) {
+            public function leftJoin(string $foo, callable $callback)
+            {
                 return $this;
             }
         };
@@ -43,12 +42,12 @@ class AnonymousFunctions
 
     public function shortFn(): callable
     {
-        return fn() => strlen("3");
+        return fn () => strlen('3');
     }
 
     public function staticShortFn(): callable
     {
-        return static fn() => strlen("3");
+        return static fn () => strlen('3');
     }
 
     public function withUse($foo): callable
@@ -60,14 +59,14 @@ class AnonymousFunctions
 
     public function dollarCurly1(string $key = 'xx')
     {
-        preg_replace("/:${key}/", 'y', 'abx');
+        preg_replace("/:{$key}/", 'y', 'abx');
 
         $this->shortFn();
     }
 
     public function dollarCurly2(string $key = 'xx')
     {
-        preg_replace("/:${key}/", 'y', 'abx');
+        preg_replace("/:{$key}/", 'y', 'abx');
 
         array_map(static function ($issue) use ($key) {
             return $issue;

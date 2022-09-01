@@ -4,8 +4,7 @@
 * As of PHP 8.1 annotations may be used as
   [PHP attributes](https://www.php.net/manual/en/language.attributes.overview.php) instead.
   That means all references to annotations in this document also apply to attributes.
-* Annotations now **must be** associated  with either a class/trait/interface,
-  method or property.
+* Annotations now **must be** associated with a structural element (class, trait, interface), a method, property or const.
 * A new annotation `PathParameter` was added for improved framework support.
 * A new annotation `Attachable` was added to simplify custom processing.
   `Attachable` can be used to attach arbitrary data to any given annotation.
@@ -62,12 +61,12 @@ One of the few differences between annotations and attributes visible in the abo
 is not nested within `OA\Info`. Nesting of attributes is possible and required in certain cases however, **in cases where there
 is no ambiguity attributes may be all written on the top level** and swagger-php will do the rest.
 
-## Annotations must be associated with code
+## Annotations must be associated with a structural element
 The (now legacy) way of parsing PHP files meant that docblocks could live in a file without a single line
 of actual PHP code.
 
 PHP Attributes cannot exist in isolation; they need code to be associated with and then are available 
-via reflection on the associated code.
+via reflection on the associated structural element.
 In order to allow to keep supporting annotations and the code simple it made sense to treat annotations and attributes
 the same in this respect.
 
@@ -87,8 +86,9 @@ class MyController
         #[OA\PathParameter] string $product_id)
     {
     }
+}
 ```
-Here it avoid having to duplicate details about the `$product_id` parameter and the simple use of the attribute
+Here it avoids having to duplicate details about the `$product_id` parameter and the simple use of the attribute
 will pick up typehints automatically.
 
 ## The `Attachable` annotation
@@ -100,13 +100,13 @@ The attachable annotation is similar to the OpenApi vendor extension `x=`. The m
 
 Their main purpose is to make customizing swagger-php easier by allowing to add arbitrary data to any annotation.
 
-One possible use case could be custom annotations. Classes extnding `Attachable` are allowed to limit 
+One possible use case could be custom annotations. Classes extending `Attachable` are allowed to limit 
 the allowed parent annotations. This means it would be easy to create a new attribute to flag certain endpoints
 as private and exclude them under certain conditions from the spec (via a custom processor).
 
 ## Removed deprecated elements
 ### `\Openapi\Analysis::processors()`
-Processors have been moved into the `Generator` class incl. some new convenicen methods.
+Processors have been moved into the `Generator` class incl. some new convenience methods.
 ### `\Openapi\Analyser::$whitelist`
 This has been replaced with the `Generator` `namespaces` property.
 ### `\Openapi\Analyser::$defaultImports`
@@ -135,5 +135,4 @@ $analysis = (new Generator())
 
         return $analysis;
     });
-
 ```

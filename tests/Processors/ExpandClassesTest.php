@@ -16,6 +16,7 @@ use OpenApi\Processors\AugmentProperties;
 use OpenApi\Processors\AugmentSchemas;
 use OpenApi\Processors\BuildPaths;
 use OpenApi\Processors\CleanUnmerged;
+use OpenApi\Processors\CleanUnusedComponents;
 use OpenApi\Processors\ExpandClasses;
 use OpenApi\Processors\ExpandInterfaces;
 use OpenApi\Processors\ExpandTraits;
@@ -25,7 +26,7 @@ use OpenApi\Tests\OpenApiTestCase;
 
 class ExpandClassesTest extends OpenApiTestCase
 {
-    protected function validate(Analysis $analysis)
+    protected function validate(Analysis $analysis): void
     {
         $analysis->openapi->info = new Info(['title' => 'test', 'version' => '1.0.0', '_context' => $this->getContext()]);
         $analysis->openapi->paths = [new PathItem(['path' => '/test', '_context' => $this->getContext()])];
@@ -54,6 +55,7 @@ class ExpandClassesTest extends OpenApiTestCase
 
         /** @var Schema[] $schemas */
         $schemas = $analysis->getAnnotationsOfType(Schema::class);
+        $this->assertCount(4, $schemas);
         $childSchema = $schemas[0];
         $this->assertSame('Child', $childSchema->schema);
         $this->assertCount(1, $childSchema->properties);
@@ -79,11 +81,12 @@ class ExpandClassesTest extends OpenApiTestCase
             // this one doesn't
             'ExpandClasses/AncestorWithoutDocBlocks.php',
         ]);
-        $analysis->process((new Generator())->getProcessors());
+        $analysis->process($this->processors([CleanUnusedComponents::class]));
         $this->validate($analysis);
 
         /** @var Schema[] $schemas */
         $schemas = $analysis->getAnnotationsOfType(Schema::class);
+        $this->assertCount(2, $schemas);
         $childSchema = $schemas[0];
         $this->assertSame('ChildWithDocBlocks', $childSchema->schema);
         $this->assertCount(1, $childSchema->properties);
@@ -103,12 +106,12 @@ class ExpandClassesTest extends OpenApiTestCase
             'ExpandClasses/Extended.php',
             'ExpandClasses/Base.php',
         ]);
-        $analysis->process((new Generator())->getProcessors());
+        $analysis->process($this->processors([CleanUnusedComponents::class]));
         $this->validate($analysis);
 
         /** @var Schema[] $schemas */
         $schemas = $analysis->getAnnotationsOfType(Schema::class, true);
-        $this->assertCount(3, $schemas);
+        $this->assertCount(5, $schemas);
 
         $extendedSchema = $schemas[0];
         $this->assertSame('ExtendedModel', $extendedSchema->schema);
@@ -131,12 +134,12 @@ class ExpandClassesTest extends OpenApiTestCase
             'ExpandClasses/ExtendedWithoutAllOf.php',
             'ExpandClasses/Base.php',
         ]);
-        $analysis->process((new Generator())->getProcessors());
+        $analysis->process($this->processors([CleanUnusedComponents::class]));
         $this->validate($analysis);
 
         /** @var Schema[] $schemas */
         $schemas = $analysis->getAnnotationsOfType(Schema::class, true);
-        $this->assertCount(2, $schemas);
+        $this->assertCount(4, $schemas);
 
         $extendedSchema = $schemas[0];
         $this->assertSame('ExtendedWithoutAllOf', $extendedSchema->schema);
@@ -158,12 +161,12 @@ class ExpandClassesTest extends OpenApiTestCase
             'ExpandClasses/ExtendedWithTwoSchemas.php',
             'ExpandClasses/Base.php',
         ]);
-        $analysis->process((new Generator())->getProcessors());
+        $analysis->process($this->processors([CleanUnusedComponents::class]));
         $this->validate($analysis);
 
         /** @var Schema[] $schemas */
         $schemas = $analysis->getAnnotationsOfType(Schema::class, true);
-        $this->assertCount(3, $schemas);
+        $this->assertCount(7, $schemas);
 
         $extendedSchema = $schemas[0];
         $this->assertSame('ExtendedWithTwoSchemas', $extendedSchema->schema);
@@ -191,7 +194,7 @@ class ExpandClassesTest extends OpenApiTestCase
             'ExpandClasses/BaseThatImplements.php',
             'ExpandClasses/TraitUsedByExtendsBaseThatImplements.php',
         ]);
-        $analysis->process((new Generator())->getProcessors());
+        $analysis->process($this->processors([CleanUnusedComponents::class]));
         $this->validate($analysis);
 
         $analysis->openapi->info = new Info(['title' => 'test', 'version' => '1.0.0', '_context' => $this->getContext()]);
@@ -200,7 +203,7 @@ class ExpandClassesTest extends OpenApiTestCase
 
         /** @var Schema[] $schemas */
         $schemas = $analysis->getAnnotationsOfType(Schema::class, true);
-        $this->assertCount(4, $schemas);
+        $this->assertCount(10, $schemas);
 
         $baseInterface = $schemas[0];
         $this->assertSame('BaseInterface', $baseInterface->schema);

@@ -8,13 +8,13 @@ namespace OpenApi\Attributes;
 
 use OpenApi\Generator;
 
-#[\Attribute(\Attribute::TARGET_CLASS)]
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::IS_REPEATABLE)]
 class Server extends \OpenApi\Annotations\Server
 {
     /**
-     * @param ServerVariable[]          $variables
-     * @param array<string,string>|null $x
-     * @param Attachable[]|null         $attachables
+     * @param ServerVariable[]         $variables
+     * @param array<string,mixed>|null $x
+     * @param Attachable[]|null        $attachables
      */
     public function __construct(
         ?string $url = null,

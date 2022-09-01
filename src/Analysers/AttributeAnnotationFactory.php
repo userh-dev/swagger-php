@@ -60,14 +60,31 @@ class AttributeAnnotationFactory implements AnnotationFactoryInterface
                         foreach ($rp->getAttributes($attributeName) as $attribute) {
                             $instance = $attribute->newInstance();
                             $type = (($rnt = $rp->getType()) && $rnt instanceof \ReflectionNamedType) ? $rnt->getName() : Generator::UNDEFINED;
+                            $nullable = $rnt ? $rnt->allowsNull() : true;
+
                             if ($instance instanceof Property) {
                                 $instance->property = $rp->getName();
-                                $instance->type = $type;
+                                if (Generator::isDefault($instance->type)) {
+                                    $instance->type = $type;
+                                }
+                                $instance->nullable = $nullable;
                             } else {
                                 $instance->name = $rp->getName();
-                                $instance->merge([new Schema(['type' => $type, '_context' => new Context(['nested' => $this], $context)])]);
+                                $instance->required = !$nullable;
+                                $context = new Context(['nested' => $this], $context);
+                                $context->comment = null;
+                                $instance->merge([new Schema(['type' => $type, '_context' => $context])]);
                             }
                             $annotations[] = $instance;
+                        }
+                    }
+                }
+
+                if (($rrt = $reflector->getReturnType()) && $rrt instanceof \ReflectionNamedType) {
+                    foreach ($annotations as $annotation) {
+                        if ($annotation instanceof Property && Generator::isDefault($annotation->type)) {
+                            // pick up simple return types
+                            $annotation->type = $rrt->getName();
                         }
                     }
                 }
@@ -103,22 +120,27 @@ class AttributeAnnotationFactory implements AnnotationFactoryInterface
             return get_class($annotation) != get_class($possibleParent)
                 && ($explicitParent || ($isAttachable && $isParentAllowed));
         };
+
+        $annotationsWithoutParent = [];
         foreach ($annotations as $index => $annotation) {
+            $mergedIntoParent = false;
+
             for ($ii = 0; $ii < count($annotations); ++$ii) {
                 if ($ii === $index) {
                     continue;
                 }
                 $possibleParent = $annotations[$ii];
                 if ($isParent($annotation, $possibleParent)) {
+                    $mergedIntoParent = true; //
                     $possibleParent->merge([$annotation]);
                 }
             }
+
+            if (!$mergedIntoParent) {
+                $annotationsWithoutParent[] = $annotation;
+            }
         }
 
-        $annotations = array_filter($annotations, function ($a) {
-            return !$a instanceof Attachable;
-        });
-
-        return $annotations;
+        return $annotationsWithoutParent;
     }
 }

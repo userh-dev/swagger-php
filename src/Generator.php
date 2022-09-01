@@ -35,19 +35,22 @@ class Generator
     /** @var string Magic value to differentiate between null and undefined. */
     public const UNDEFINED = '@OA\Generator::UNDEFINED🙈';
 
-    /** @var string[] */
+    /** @var array<string,string> */
     public const DEFAULT_ALIASES = ['oa' => 'OpenApi\\Annotations'];
-    /** @var string[] */
+    /** @var array<string> */
     public const DEFAULT_NAMESPACES = ['OpenApi\\Annotations\\'];
 
-    /** @var array Map of namespace aliases to be supported by doctrine. */
+    /** @var array<string,string> Map of namespace aliases to be supported by doctrine. */
     protected $aliases;
 
-    /** @var array|null List of annotation namespaces to be autoloaded by doctrine. */
+    /** @var array<string>|null List of annotation namespaces to be autoloaded by doctrine. */
     protected $namespaces;
 
     /** @var AnalyserInterface|null The configured analyzer. */
     protected $analyser;
+
+    /** @var array<string,mixed> */
+    protected $config = [];
 
     /** @var callable[]|null List of configured processors. */
     protected $processors = null;
@@ -55,8 +58,17 @@ class Generator
     /** @var LoggerInterface|null PSR logger. */
     protected $logger = null;
 
-    /** @var string */
-    protected $version = OpenApi::DEFAULT_VERSION;
+    /**
+     * OpenApi version override.
+     *
+     * If set, it will override the version set in the `OpenApi` annotation.
+     *
+     * Due to the order of processing any conditional code using this (via `Context::$version`)
+     * must come only after the analysis is finished.
+     *
+     * @var string|null
+     */
+    protected $version = null;
 
     private $configStack;
 
@@ -109,6 +121,9 @@ class Generator
         };
     }
 
+    /**
+     * @param mixed $value
+     */
     public static function isDefault($value): bool
     {
         return $value === Generator::UNDEFINED;
@@ -168,6 +183,60 @@ class Generator
         return $this;
     }
 
+    public function getDefaultConfig(): array
+    {
+        return [
+            'operationId' => [
+                'hash' => true,
+            ],
+        ];
+    }
+
+    public function getConfig(): array
+    {
+        return $this->config + $this->getDefaultConfig();
+    }
+
+    protected function normaliseConfig(array $config): array
+    {
+        $normalised = [];
+        foreach ($config as $key => $value) {
+            if (is_numeric($key)) {
+                $token = explode('=', $value);
+                if (2 == count($token)) {
+                    // 'operationId.hash=false'
+                    [$key, $value] = $token;
+                }
+            }
+
+            if (in_array($value, ['true', 'false'])) {
+                $value = 'true' == $value;
+            }
+
+            $token = explode('.', $key);
+            if (2 == count($token)) {
+                // 'operationId.hash' => false
+                $normalised[$token[0]][$token[1]] = $value;
+            } else {
+                $normalised[$key] = $value;
+            }
+        }
+
+        return $normalised;
+    }
+
+    /**
+     * Set generator and/or processor config.
+     *
+     * @param array<string,mixed> $config
+     */
+    public function setConfig(array $config): Generator
+    {
+        $this->config = $this->normaliseConfig($config) + $this->config;
+
+        return $this;
+    }
+
     /**
      * @return callable[]
      */
@@ -192,6 +261,22 @@ class Generator
                 new Processors\OperationId(),
                 new Processors\CleanUnmerged(),
             ];
+        }
+
+        $config = $this->getConfig();
+        foreach ($this->processors as $processor) {
+            $rc = new \ReflectionClass($processor);
+
+            // apply config
+            $processorKey = lcfirst($rc->getShortName());
+            if (array_key_exists($processorKey, $config)) {
+                foreach ($config[$processorKey] as $name => $value) {
+                    $setter = 'set' . ucfirst($name);
+                    if (method_exists($processor, $setter)) {
+                        $processor->{$setter}($value);
+                    }
+                }
+            }
         }
 
         return $this->processors;
@@ -240,7 +325,7 @@ class Generator
      */
     public function updateProcessor(callable $processor, ?callable $matcher = null): Generator
     {
-        $matcher = $matcher ?: function ($other) use ($processor) {
+        $matcher = $matcher ?: function ($other) use ($processor): bool {
             $otherClass = get_class($other);
 
             return $processor instanceof $otherClass;
@@ -259,12 +344,12 @@ class Generator
         return $this->logger ?: new DefaultLogger();
     }
 
-    public function getVersion(): string
+    public function getVersion(): ?string
     {
         return $this->version;
     }
 
-    public function setVersion(string $version): Generator
+    public function setVersion(?string $version): Generator
     {
         $this->version = $version;
 
@@ -282,7 +367,7 @@ class Generator
                 'processors' => null,
                 'logger' => null,
                 'validate' => true,
-                'version' => OpenApi::DEFAULT_VERSION,
+                'version' => null,
             ];
 
         return (new Generator($config['logger']))
@@ -345,7 +430,8 @@ class Generator
             $analysis->process($this->getProcessors());
 
             if ($analysis->openapi) {
-                $analysis->openapi->openapi = $this->version;
+                $analysis->openapi->openapi = $this->version ?: $analysis->openapi->openapi;
+                $rootContext->version = $analysis->openapi->openapi;
             }
 
             // validation

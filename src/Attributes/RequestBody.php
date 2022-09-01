@@ -12,22 +12,27 @@ use OpenApi\Generator;
 class RequestBody extends \OpenApi\Annotations\RequestBody
 {
     /**
-     * @param array<string,string>|null $x
-     * @param Attachable[]|null         $attachables
+     * @param array<MediaType>|JsonContent|XmlContent|null $content
+     * @param array<string,mixed>|null                     $x
+     * @param Attachable[]|null                            $attachables
      */
     public function __construct(
+        string|object|null $ref = null,
+        ?string $request = null,
         ?string $description = null,
         ?bool $required = null,
-        $content = null,
+        array|JsonContent|XmlContent|null $content = null,
         // annotation
         ?array $x = null,
         ?array $attachables = null
     ) {
         parent::__construct([
-                'description' => $description ?? Generator::UNDEFINED,
-                'required' => $required ?? Generator::UNDEFINED,
-                'x' => $x ?? Generator::UNDEFINED,
-                'value' => $this->combine($content, $attachables),
-            ]);
+            'ref' => $ref ?? Generator::UNDEFINED,
+            'request' => $request ?? Generator::UNDEFINED,
+            'description' => $description ?? Generator::UNDEFINED,
+            'required' => $required ?? Generator::UNDEFINED,
+            'x' => $x ?? Generator::UNDEFINED,
+            'value' => $this->combine($content, $attachables),
+        ]);
     }
 }
