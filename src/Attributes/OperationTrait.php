@@ -11,13 +11,14 @@ use OpenApi\Generator;
 trait OperationTrait
 {
     /**
-     * @param array                     $security
-     * @param Server[]                  $servers
-     * @param string[]                  $tags
-     * @param Parameter[]               $parameters
-     * @param Response[]                $responses
-     * @param array<string,string>|null $x
-     * @param Attachable[]|null         $attachables
+     * @param array                    $security
+     * @param Server[]                 $servers
+     * @param string[]                 $tags
+     * @param Parameter[]              $parameters
+     * @param Response[]               $responses
+     * @param callable[]               $callbacks
+     * @param array<string,mixed>|null $x
+     * @param Attachable[]|null        $attachables
      */
     public function __construct(
         ?string $path = null,
@@ -30,7 +31,9 @@ trait OperationTrait
         ?array $tags = null,
         ?array $parameters = null,
         ?array $responses = null,
+        ?array $callbacks = null,
         ?ExternalDocumentation $externalDocs = null,
+        ?bool $deprecated = null,
         // annotation
         ?array $x = null,
         ?array $attachables = null
@@ -43,6 +46,8 @@ trait OperationTrait
                 'security' => $security ?? Generator::UNDEFINED,
                 'servers' => $servers ?? Generator::UNDEFINED,
                 'tags' => $tags ?? Generator::UNDEFINED,
+                'callbacks' => $callbacks ?? Generator::UNDEFINED,
+                'deprecated' => $deprecated ?? Generator::UNDEFINED,
                 'x' => $x ?? Generator::UNDEFINED,
                 'value' => $this->combine($requestBody, $responses, $parameters, $externalDocs, $attachables),
             ]);

@@ -7,16 +7,16 @@
 namespace AnotherNamespace;
 
 use OpenApi\Tests\Fixtures\ExpandClasses\AncestorWithoutDocBlocks;
+use OpenApi\Annotations as OA;
 
 /**
- * @OA\Schema()
+ * @OA\Schema
  */
 class ChildWithDocBlocks extends AncestorWithoutDocBlocks
 {
-
     /**
      * @var bool
-     * @OA\Property()
+     * @OA\Property
      */
     public $isBaby;
 }

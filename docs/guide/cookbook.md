@@ -36,7 +36,7 @@ support further grouping via the vendor extension `x-tagGroups`.
 ```
 
 ## External documentation
-OpenApi allows a single reference to external documentation. This isa part of the top level `@OA\OpenApi`.
+OpenApi allows a single reference to external documentation. This is a part of the top level `@OA\OpenApi`.
 
 ```php
 /**
@@ -65,7 +65,7 @@ That means the above example would also work with just the `OA\ExternalDocumenta
 :::
 
 ## Properties with union types
-Sometimes properties or even lists (arrays) may data of different type. This can be expressed using `oneOf`.
+Sometimes properties or even lists (arrays) may contain data of different types. This can be expressed using `oneOf`.
 
 ```php
 /**
@@ -275,7 +275,7 @@ Form posts are `@OA\Post` requests with a `multipart/form-data` `@OA\RequestBody
 ```
 
 ## Default security scheme for all endpoints
-Unless specified each endpoint needs to declare what security schemes it supports. However, there is a way to
+Unless specified each endpoint needs to declare what security schemes it supports. However, there is a way
 to also configure security schemes globally for the whole API.
 
 This is done on the `@OA\OpenApi` annotations:
@@ -288,7 +288,7 @@ This is done on the `@OA\OpenApi` annotations:
  * @OA\SecurityScheme(
  *   securityScheme="bearerAuth",
  *   type="http",
- *   scheme="bearer",
+ *   scheme="bearer"
  * )
  */
 ```
@@ -409,7 +409,7 @@ There are two scenarios where this can happen
 2. There are multiple global response declared, again more than one with the same `response` value.
 
 ## Callbacks
-The API does incllude basic support for callbacks. However, this needs to be set up mostly manually.
+The API does include basic support for callbacks. However, this needs to be set up mostly manually.
 
 **Example**
 ```php
@@ -442,7 +442,7 @@ The API does incllude basic support for callbacks. However, this needs to be set
 ```
 
 ## (Mostly) virtual models
-Typically a model is annotated by adding a `@OA\Schema` annotation to the class and then individual `@OA\Property` annotations
+Typically, a model is annotated by adding a `@OA\Schema` annotation to the class and then individual `@OA\Property` annotations
 to the individually declared class properties.
 
 It is possible, however, to nest `O@\Property` annotations inside a schema even without properties. In fact, all that is needed
@@ -482,7 +482,7 @@ class Book
 
 This works, but is not very convenient. 
 
-First of all, when using custom schema names (`schema: 'user'`), this needs to be taken into account everywhere.
+First, when using custom schema names (`schema: 'user'`), this needs to be taken into account everywhere.
 Secondly, having to write `ref: '#/components/schemas/user'` is tedious and error-prone.
 
 Using attributes all this changes as we can take advantage of PHP itself by referring to a schema by its (fully qualified)
@@ -551,4 +551,140 @@ components:
         - OPEN
         - MERGED
         - DECLINED
+```
+
+## Multi value query parameter: `&q[]=1&q[]=1`
+
+PHP allows to have query parameters multiple times in the url and will combine the values to an array if the parameter
+name uses trailing `[]`. In fact, it is possible to create nested arrays too by using more than one pair of `[]`.
+
+In terms of OpenAPI, the parameters can be considered a single parameter with a list of values.
+
+```php
+/**
+ * @OA\Get(
+ *     path="/api/endpoint",
+ *     description="The endpoint",
+ *     operationId="endpoint",
+ *     tags={"endpoints"},
+ *     @OA\Parameter(
+ *         name="things[]",
+ *         in="query",
+ *         description="A list of things.",
+ *         required=false,
+ *         @OA\Schema(
+ *             type="array",
+ *             @OA\Items(type="integer")
+ *         )
+ *     ),
+ *     @OA\Response(response="200", description="All good")
+ * )
+ */
+```
+
+The corresponding bit of the spec will look like this:
+
+```yaml
+      parameters:
+        -
+          name: 'things[]'
+          in: query
+          description: 'A list of things.'
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+```
+
+`swagger-ui` will show  a form that allows to add/remove items (`integer`  values in this case) to/from a list
+and post those values as something like ```?things[]=1&things[]=2&things[]=0``` 
+
+## Custom response classes
+
+Even with using refs there is a bit of overhead in sharing responses. One way around that is to write
+your own response classes.
+The beauty is that in your custom `__construct()` method you can prefill as much as you need.
+
+Best of all, this works for both annotations and attributes.
+
+Example:
+```php
+use OpenApi\Attributes as OA;
+
+/**
+ * @Annotation
+ */
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD | \Attribute::IS_REPEATABLE)]
+class BadRequest extends OA\Response
+{
+    public function __construct()
+    {
+        parent::__construct(response: 400, description: 'Bad request');
+    }
+}
+
+class Controller
+{
+
+    #[OA\Get(path: '/foo', responses: [new BadRequest()])]
+    public function get()
+    {
+    }
+
+    #[OA\Post(path: '/foo')]
+    #[BadRequest]
+    public function post()
+    {
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/foo",
+     *     @BadRequest()
+     * )
+     */
+    public function delete()
+    {
+    }
+}
+```
+
+::: tip Annotations only?
+If you are only interested in annotations you canleave out the attribute setup line (`#[\Attribute...`) for `BadRequest`.   
+
+Furthermore, your custom annotations should extend from the `OpenApi\Annotations` namespace. 
+:::
+
+## Annotating class constants
+```php
+use OpenApi\Attributes as OA;
+
+#[OA\Schema()]
+class Airport
+{
+    #[OA\Property(property='kind')]
+    public const KIND = 'Airport';
+}
+```
+The `const` property is supported in OpenApi 3.1.0.
+```yaml
+components:
+  schemas:
+    Airport:
+        properties:
+          kind:
+            type: string
+            const: Airport
+```
+For 3.0.0 this is serialized into a single value `enum`.
+```yaml
+components:
+  schemas:
+    Airport:
+        properties:
+          kind:
+            type: string
+            enum: 
+              - Airport
 ```

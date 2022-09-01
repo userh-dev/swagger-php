@@ -1,6 +1,6 @@
 <?php
 
-namespace OpenApi\Examples\OpenapiSpec;
+namespace OpenApi\Examples\UsingLinks;
 
 use OpenApi\Annotations as OA;
 
@@ -9,15 +9,16 @@ use OpenApi\Annotations as OA;
  */
 class User
 {
-
     /**
-     * @OA\Property()
+     * @OA\Property
+     *
      * @var string
      */
     public $username;
 
     /**
-     * @OA\Property()
+     * @OA\Property
+     *
      * @var string
      */
     public $uuid;

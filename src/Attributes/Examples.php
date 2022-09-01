@@ -8,18 +8,18 @@ namespace OpenApi\Attributes;
 
 use OpenApi\Generator;
 
-#[\Attribute(\Attribute::TARGET_CLASS)]
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD | \Attribute::TARGET_PROPERTY)]
 class Examples extends \OpenApi\Annotations\Examples
 {
     /**
-     * @param array<string,string>|null $x
-     * @param Attachable[]|null         $attachables
+     * @param array<string,mixed>|null $x
+     * @param Attachable[]|null        $attachables
      */
     public function __construct(
         ?string $example = null,
         ?string $summary = null,
         ?string $description = null,
-        ?string $value = null,
+        int|string|array|null $value = null,
         ?string $externalValue = null,
         string|object|null $ref = null,
         // annotation

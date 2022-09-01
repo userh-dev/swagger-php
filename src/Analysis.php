@@ -72,7 +72,7 @@ class Analysis
         $this->addAnnotations($annotations, $context);
     }
 
-    public function addAnnotation($annotation, Context $context): void
+    public function addAnnotation(object $annotation, Context $context): void
     {
         if ($this->annotations->contains($annotation)) {
             return;
@@ -237,7 +237,7 @@ class Analysis
 
         if (!$direct) {
             // expand recursively for interfaces extending other interfaces
-            $collect = function ($interfaces, $cb) use (&$definitions) {
+            $collect = function ($interfaces, $cb) use (&$definitions): void {
                 foreach ($interfaces as $interface) {
                     if (isset($this->interfaces[$interface]['extends'])) {
                         $cb($this->interfaces[$interface]['extends'], $cb);
@@ -283,7 +283,7 @@ class Analysis
 
         if (!$direct) {
             // expand recursively for traits using other traits
-            $collect = function ($traits, $cb) use (&$definitions) {
+            $collect = function ($traits, $cb) use (&$definitions): void {
                 foreach ($traits as $trait) {
                     if (isset($this->traits[$trait]['traits'])) {
                         $cb($this->traits[$trait]['traits'], $cb);
@@ -352,12 +352,7 @@ class Analysis
         return null;
     }
 
-    /**
-     * @param object $annotation
-     *
-     * @return \OpenApi\Context
-     */
-    public function getContext($annotation): Context
+    public function getContext(object $annotation): ?Context
     {
         if ($annotation instanceof AbstractAnnotation) {
             return $annotation->_context;
@@ -427,6 +422,7 @@ class Analysis
         if (is_array($processors) === false && is_callable($processors)) {
             $processors = [$processors];
         }
+
         foreach ($processors as $processor) {
             $processor($this);
         }
@@ -437,6 +433,7 @@ class Analysis
         if ($this->openapi !== null) {
             return $this->openapi->validate();
         }
+
         $this->context->logger->warning('No openapi target set. Run the MergeIntoOpenApi processor before validate()');
 
         return false;

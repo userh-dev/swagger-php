@@ -18,10 +18,10 @@ class User extends ParentClass implements \OpenApi\Tests\Fixtures\Parser\UserInt
 {
     use Hello;
 
-    const CONSTANT = 'value';
+    public const CONSTANT = 'value';
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     public function getFirstName()
     {

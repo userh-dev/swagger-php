@@ -1,6 +1,6 @@
 <?php
 
-namespace OpenApi\Examples\OpenapiSpec;
+namespace OpenApi\Examples\UsingLinks;
 
 use OpenApi\Annotations as OA;
 
@@ -9,15 +9,16 @@ use OpenApi\Annotations as OA;
  */
 class Repository
 {
-
     /**
-     * @OA\Property()
+     * @OA\Property
+     *
      * @var string
      */
     public $slug;
 
     /**
-     * @OA\Property()
+     * @OA\Property
+     *
      * @var User
      */
     public $owner;

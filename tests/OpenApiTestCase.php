@@ -58,9 +58,10 @@ class OpenApiTestCase extends TestCase
     public function getTrackingLogger(): ?LoggerInterface
     {
         return new class($this) extends AbstractLogger {
+            /** @var OpenApiTestCase */
             protected $testCase;
 
-            public function __construct($testCase)
+            public function __construct(OpenApiTestCase $testCase)
             {
                 $this->testCase = $testCase;
             }
@@ -77,7 +78,7 @@ class OpenApiTestCase extends TestCase
         };
     }
 
-    public function getContext(array $properties = [], string $version = OpenApi::DEFAULT_VERSION): Context
+    public function getContext(array $properties = [], ?string $version = OpenApi::DEFAULT_VERSION): Context
     {
         return new Context(
             [
@@ -96,7 +97,7 @@ class OpenApiTestCase extends TestCase
             : new ReflectionAnalyser([new DocBlockAnnotationFactory(), new AttributeAnnotationFactory()]);
     }
 
-    public function assertOpenApiLogEntryContains($needle, $message = ''): void
+    public function assertOpenApiLogEntryContains(string $needle, string $message = ''): void
     {
         $this->expectedLogMessages[] = [function ($entry, $type) use ($needle, $message) {
             if ($entry instanceof Exception) {
@@ -166,7 +167,7 @@ class OpenApiTestCase extends TestCase
                 $this->assertSpecEquals(((array) $actual)[$key], $value, $message . ' > ' . $key, true);
             }
         } else {
-            $this->assertEquals($actual, $expected, $message);
+            $this->assertEquals($expected, $actual, $message);
         }
     }
 
@@ -212,6 +213,17 @@ class OpenApiTestCase extends TestCase
         }, $files);
     }
 
+    public function processors(array $strip = [], array $add = []): array
+    {
+        $processors = (new Generator())->getProcessors();
+
+        $processors = array_filter($processors, function ($processor) use ($strip) {
+            return !is_object($processor) || !in_array(get_class($processor), $strip);
+        });
+
+        return $processors;
+    }
+
     public function analysisFromFixtures(array $files, array $processors = [], ?AnalyserInterface $analyzer = null): Analysis
     {
         $analysis = new Analysis([], $this->getContext());
@@ -253,6 +265,29 @@ class OpenApiTestCase extends TestCase
                 continue;
             }
             $classes[$class] = ['OpenApi\\Annotations\\' . $class];
+        }
+
+        return $classes;
+    }
+
+    /**
+     * Collect list of all non-abstract attribute classes.
+     *
+     * @return array
+     */
+    public function allAttributeClasses(): array
+    {
+        $classes = [];
+        $dir = new DirectoryIterator(__DIR__ . '/../src/Attributes');
+        foreach ($dir as $entry) {
+            if (!$entry->isFile() || $entry->getExtension() != 'php') {
+                continue;
+            }
+            $class = $entry->getBasename('.php');
+            if (in_array($class, ['OperationTrait', 'ParameterTrait'])) {
+                continue;
+            }
+            $classes[$class] = ['OpenApi\\Attributes\\' . $class];
         }
 
         return $classes;

@@ -6,14 +6,16 @@
 
 namespace OpenApi\Tests\Fixtures\ExpandClasses;
 
+use OpenApi\Annotations as OA;
+
 /**
- * @OA\Schema()
+ * @OA\Schema
  */
 class Base
 {
-
     /**
-     * @OA\Property();
+     * @OA\Property
+     *
      * @var string
      */
     public $baseProperty;

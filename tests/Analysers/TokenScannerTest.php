@@ -11,7 +11,7 @@ use OpenApi\Tests\OpenApiTestCase;
 
 class TokenScannerTest extends OpenApiTestCase
 {
-    public function scanCases()
+    public function scanCases(): iterable
     {
         if (\PHP_VERSION_ID >= 80100) {
             yield 'basic' => [
@@ -30,15 +30,15 @@ class TokenScannerTest extends OpenApiTestCase
                         'interfaces' => ['OpenApi\\Tests\\Fixtures\\Apis\\DocBlocks\\ProductInterface'],
                         'traits' => ['OpenApi\\Tests\\Fixtures\\Apis\\DocBlocks\\NameTrait'],
                         'enums' => [],
-                        'methods' => [],
-                        'properties' => ['quantity', 'brand', 'colour', 'id'],
+                        'methods' => ['__construct'],
+                        'properties' => ['quantity', 'brand', 'colour', 'id', 'releasedAt'],
                     ],
                     'OpenApi\\Tests\\Fixtures\\Apis\\DocBlocks\\ProductController' => [
                         'uses' => ['OA' => 'OpenApi\\Annotations'],
                         'interfaces' => [],
                         'traits' => [],
                         'enums' => [],
-                        'methods' => ['getProduct', 'addProduct', 'getAll'],
+                        'methods' => ['getProduct', 'addProduct', 'getAll', 'subscribe'],
                         'properties' => [],
                     ],
                     'OpenApi\\Tests\\Fixtures\\Apis\\DocBlocks\\ProductInterface' => [
@@ -65,9 +65,35 @@ class TokenScannerTest extends OpenApiTestCase
                         'methods' => [],
                         'properties' => [],
                     ],
+                    'OpenApi\\Tests\\Fixtures\\Apis\\DocBlocks\\Server' => [
+                        'uses' => ['OA' => 'OpenApi\\Annotations'],
+                        'interfaces' => [],
+                        'traits' => [],
+                        'enums' => [],
+                        'methods' => [],
+                        'properties' => [],
+                    ],
                 ],
             ];
         }
+
+        yield 'references' => [
+            'PHP/References.php',
+            [
+                'OpenApi\Tests\Fixtures\PHP\References' => [
+                    'uses' => [
+                        'OA' => 'OpenApi\Annotations',
+                    ],
+                    'interfaces' => [],
+                    'traits' => [],
+                    'enums' => [],
+                    'methods' => [
+                        'return_ref',
+                    ],
+                    'properties' => [],
+                ],
+            ],
+        ];
 
         yield 'php7' => [
             'PHP/php7.php',
@@ -211,7 +237,7 @@ class TokenScannerTest extends OpenApiTestCase
             'PHP/AnonymousFunctions.php',
             [
                 'OpenApi\\Tests\\Fixtures\\PHP\\AnonymousFunctions' => [
-                    'uses' => ['Info' => 'OpenApi\\Annotations\\Info'],
+                    'uses' => [],
                     'interfaces' => [],
                     'traits' => [],
                     'enums' => [],
@@ -307,7 +333,7 @@ class TokenScannerTest extends OpenApiTestCase
     /**
      * @dataProvider scanCases
      */
-    public function testScanFile($fixture, $expected): void
+    public function testScanFile(string $fixture, array $expected): void
     {
         $result = (new TokenScanner())->scanFile($this->fixture($fixture));
         $this->assertEquals($expected, $result);

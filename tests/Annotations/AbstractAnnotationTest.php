@@ -9,6 +9,7 @@ namespace OpenApi\Tests\Annotations;
 use OpenApi\Annotations\Get;
 use OpenApi\Annotations\Parameter;
 use OpenApi\Annotations\Schema;
+use OpenApi\Generator;
 use OpenApi\Tests\OpenApiTestCase;
 
 class AbstractAnnotationTest extends OpenApiTestCase
@@ -21,6 +22,9 @@ class AbstractAnnotationTest extends OpenApiTestCase
         $this->assertSame(123, $output->$prefixedProperty);
     }
 
+    /**
+     * @requires PHP < 8.2
+     */
     public function testInvalidField(): void
     {
         $this->assertOpenApiLogEntryContains('Unexpected field "doesnot" for @OA\Get(), expecting');
@@ -106,7 +110,7 @@ END;
         $parameter->validate();
     }
 
-    public function nestedMatches()
+    public function nestedMatches(): iterable
     {
         $parameterMatch = (object) ['key' => Parameter::class, 'value' => ['parameters']];
 
@@ -123,9 +127,18 @@ END;
     /**
      * @dataProvider nestedMatches
      */
-    public function testMatchNested($class, $expected): void
+    public function testMatchNested(string $class, $expected): void
     {
         $this->assertEquals($expected, Get::matchNested($class));
+    }
+
+    public function testDuplicateOperationIdValidation(): void
+    {
+        $analysis = $this->analysisFromFixtures(['DuplicateOperationId.php']);
+        $analysis->process((new Generator())->getProcessors());
+
+        $this->assertOpenApiLogEntryContains('operationId must be unique. Duplicate value found: "getItem"');
+        $this->assertFalse($analysis->validate());
     }
 }
 

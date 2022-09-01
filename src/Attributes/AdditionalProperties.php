@@ -12,9 +12,16 @@ use OpenApi\Generator;
 class AdditionalProperties extends \OpenApi\Annotations\AdditionalProperties
 {
     /**
-     * @param string[]|null             $required
-     * @param array<string,string>|null $x
-     * @param Attachable[]|null         $attachables
+     * @param string[]                                  $required
+     * @param Property[]                                $properties
+     * @param int|float                                 $maximum
+     * @param int|float                                 $minimum
+     * @param string[]|int[]|float[]                    $enum
+     * @param array<Schema|\OpenApi\Annotations\Schema> $allOf
+     * @param array<Schema|\OpenApi\Annotations\Schema> $anyOf
+     * @param array<Schema|\OpenApi\Annotations\Schema> $oneOf
+     * @param array<string,mixed>|null                  $x
+     * @param Attachable[]|null                         $attachables
      */
     public function __construct(
         // schema
@@ -28,7 +35,7 @@ class AdditionalProperties extends \OpenApi\Annotations\AdditionalProperties
         ?string $format = null,
         ?Items $items = null,
         ?string $collectionFormat = null,
-        $default = null,
+        mixed $default = Generator::UNDEFINED,
         $maximum = null,
         ?bool $exclusiveMaximum = null,
         $minimum = null,
@@ -45,7 +52,7 @@ class AdditionalProperties extends \OpenApi\Annotations\AdditionalProperties
         ?bool $writeOnly = null,
         ?Xml $xml = null,
         ?ExternalDocumentation $externalDocs = null,
-        $example = null,
+        mixed $example = Generator::UNDEFINED,
         ?bool $nullable = null,
         ?bool $deprecated = null,
         ?array $allOf = null,
@@ -65,7 +72,7 @@ class AdditionalProperties extends \OpenApi\Annotations\AdditionalProperties
             'type' => $type ?? Generator::UNDEFINED,
             'format' => $format ?? Generator::UNDEFINED,
             'collectionFormat' => $collectionFormat ?? Generator::UNDEFINED,
-            'default' => $default ?? Generator::UNDEFINED,
+            'default' => $default,
             'maximum' => $maximum ?? Generator::UNDEFINED,
             'exclusiveMaximum' => $exclusiveMaximum ?? Generator::UNDEFINED,
             'minimum' => $minimum ?? Generator::UNDEFINED,
@@ -80,7 +87,7 @@ class AdditionalProperties extends \OpenApi\Annotations\AdditionalProperties
             'readOnly' => $readOnly ?? Generator::UNDEFINED,
             'writeOnly' => $writeOnly ?? Generator::UNDEFINED,
             'xml' => $xml ?? Generator::UNDEFINED,
-            'example' => $example ?? Generator::UNDEFINED,
+            'example' => $example,
             'nullable' => $nullable ?? Generator::UNDEFINED,
             'deprecated' => $deprecated ?? Generator::UNDEFINED,
             'allOf' => $allOf ?? Generator::UNDEFINED,

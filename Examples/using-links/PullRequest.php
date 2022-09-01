@@ -1,6 +1,6 @@
 <?php
 
-namespace OpenApi\Examples\OpenapiSpec;
+namespace OpenApi\Examples\UsingLinks;
 
 use OpenApi\Annotations as OA;
 
@@ -9,27 +9,30 @@ use OpenApi\Annotations as OA;
  */
 class PullRequest
 {
-
     /**
-     * @OA\Property()
-     * @var integer
+     * @OA\Property
+     *
+     * @var int
      */
     public $id;
 
     /**
-     * @OA\Property()
+     * @OA\Property
+     *
      * @var string
      */
     public $title;
 
     /**
-     * @OA\Property()
+     * @OA\Property
+     *
      * @var Repository
      */
     public $repository;
 
     /**
-     * @OA\Property()
+     * @OA\Property
+     *
      * @var User
      */
     public $author;

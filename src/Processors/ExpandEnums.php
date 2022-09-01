@@ -10,7 +10,6 @@ use OpenApi\Analysis;
 use OpenApi\Annotations\Schema as AnnotationSchema;
 use OpenApi\Attributes\Schema as AttributeSchema;
 use OpenApi\Generator;
-use OpenApi\Util;
 
 /**
  * Look at all enums with a schema and:
@@ -19,6 +18,8 @@ use OpenApi\Util;
  */
 class ExpandEnums
 {
+    use Concerns\TypesTrait;
+
     public function __invoke(Analysis $analysis)
     {
         if (!class_exists('\\ReflectionEnum')) {
@@ -33,14 +34,24 @@ class ExpandEnums
                 $source = $schema->_context->enum;
                 $re = new \ReflectionEnum($schema->_context->fullyQualifiedName($source));
                 $schema->schema = !Generator::isDefault($schema->schema) ? $schema->schema : $re->getShortName();
-                $schema->enum = array_map(function ($case) {
+                $type = 'string';
+                $schemaType = 'string';
+                if ($re->isBacked() && ($backingType = $re->getBackingType()) && method_exists($backingType, 'getName')) {
+                    if (Generator::isDefault($schema->type)) {
+                        $type = $backingType->getName();
+                    } else {
+                        $type = $schema->type;
+                        $schemaType = $schema->type;
+                    }
+                }
+                $schema->enum = array_map(function ($case) use ($re, $schemaType, $type) {
+                    if ($re->isBacked() && $type === $schemaType) {
+                        return $case->getBackingValue();
+                    }
+
                     return $case->name;
                 }, $re->getCases());
-                $type = 'string';
-                if ($re->isBacked() && ($backingType = $re->getBackingType())) {
-                    $type = !Generator::isDefault($schema->type) ? $schema->type : $backingType->getName();
-                }
-                Util::mapNativeType($schema, $type);
+                $this->mapNativeType($schema, $type);
             }
         }
     }

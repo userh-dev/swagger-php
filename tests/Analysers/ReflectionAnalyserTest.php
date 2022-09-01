@@ -21,6 +21,7 @@ use OpenApi\Annotations\Schema;
 use OpenApi\Attributes\Get;
 use OpenApi\Context;
 use OpenApi\Generator;
+use OpenApi\Processors\CleanUnusedComponents;
 use OpenApi\Tests\Fixtures\PHP\Inheritance\ExtendsClass;
 use OpenApi\Tests\Fixtures\PHP\Inheritance\ExtendsTrait;
 use OpenApi\Tests\OpenApiTestCase;
@@ -72,7 +73,7 @@ class ReflectionAnalyserTest extends OpenApiTestCase
         $this->assertEquals($expected, array_keys($annotationFactory->reflectors));
     }
 
-    public function analysers()
+    public function analysers(): iterable
     {
         return [
             'docblocks-attributes' => [new ReflectionAnalyser([new DocBlockAnnotationFactory(), new AttributeAnnotationFactory()])],
@@ -86,13 +87,14 @@ class ReflectionAnalyserTest extends OpenApiTestCase
      */
     public function testApiDocBlockBasic(AnalyserInterface $analyser): void
     {
+        require_once $this->fixture('Apis/DocBlocks/basic.php');
+
         $analysis = (new Generator())
             ->setVersion(OpenApi::VERSION_3_1_0)
             ->withContext(function (Generator $generator) use ($analyser) {
                 $analyser->setGenerator($generator);
                 $analysis = $analyser->fromFile($this->fixture('Apis/DocBlocks/basic.php'), $this->getContext([], $generator->getVersion()));
                 $analysis->process($generator->getProcessors());
-                $analysis->openapi->openapi = $generator->getVersion();
 
                 return $analysis;
             });
@@ -101,7 +103,7 @@ class ReflectionAnalyserTest extends OpenApiTestCase
         $this->assertIsArray($operations);
 
         $spec = $this->fixture('Apis/basic.yaml');
-        //file_put_contents($spec, $analysis->openapi->toYaml());
+        // file_put_contents($spec, $analysis->openapi->toYaml());
         $this->assertTrue($analysis->validate());
         $this->assertSpecEquals($analysis->openapi, file_get_contents($spec));
     }
@@ -112,16 +114,16 @@ class ReflectionAnalyserTest extends OpenApiTestCase
      */
     public function testApiAttributesBasic(AnalyserInterface $analyser): void
     {
+        require_once $this->fixture('Apis/Attributes/basic.php');
+
         /** @var Analysis $analysis */
         $analysis = (new Generator())
-            ->setVersion(OpenApi::VERSION_3_1_0)
             ->addAlias('oaf', 'OpenApi\\Tests\\Annotations')
             ->addNamespace('OpenApi\\Tests\\Annotations\\')
             ->withContext(function (Generator $generator) use ($analyser) {
                 $analyser->setGenerator($generator);
                 $analysis = $analyser->fromFile($this->fixture('Apis/Attributes/basic.php'), $this->getContext([], $generator->getVersion()));
-                $analysis->process((new Generator())->getProcessors());
-                $analysis->openapi->openapi = $generator->getVersion();
+                $analysis->process(($generator)->getProcessors());
 
                 return $analysis;
             });
@@ -130,7 +132,7 @@ class ReflectionAnalyserTest extends OpenApiTestCase
         $this->assertIsArray($operations);
 
         $spec = $this->fixture('Apis/basic.yaml');
-        //file_put_contents($spec, $analysis->openapi->toYaml());
+        // file_put_contents($spec, $analysis->openapi->toYaml());
         $this->assertTrue($analysis->validate());
         $this->assertSpecEquals($analysis->openapi, file_get_contents($spec));
 
@@ -154,13 +156,13 @@ class ReflectionAnalyserTest extends OpenApiTestCase
      */
     public function testApiMixedBasic(AnalyserInterface $analyser): void
     {
+        require_once $this->fixture('Apis/Mixed/basic.php');
+
         $analysis = (new Generator())
-            ->setVersion(OpenApi::VERSION_3_1_0)
             ->withContext(function (Generator $generator) use ($analyser) {
                 $analyser->setGenerator($generator);
                 $analysis = $analyser->fromFile($this->fixture('Apis/Mixed/basic.php'), $this->getContext([], $generator->getVersion()));
-                $analysis->process((new Generator())->getProcessors());
-                $analysis->openapi->openapi = $generator->getVersion();
+                $analysis->process(($generator)->getProcessors());
 
                 return $analysis;
             });
@@ -169,7 +171,7 @@ class ReflectionAnalyserTest extends OpenApiTestCase
         $this->assertIsArray($operations);
 
         $spec = $this->fixture('Apis/basic.yaml');
-        //file_put_contents($spec, $analysis->openapi->toYaml());
+        // file_put_contents($spec, $analysis->openapi->toYaml());
         $this->assertTrue($analysis->validate());
         $this->assertSpecEquals($analysis->openapi, file_get_contents($spec));
     }
@@ -187,7 +189,7 @@ class ReflectionAnalyserTest extends OpenApiTestCase
         $schemas = $analysis->getAnnotationsOfType(Schema::class, true);
 
         $this->assertCount(1, $schemas);
-        $analysis->process((new Generator())->getProcessors());
+        $analysis->process($this->processors([CleanUnusedComponents::class]));
 
         /** @var Property[] $properties */
         $properties = $analysis->getAnnotationsOfType(Property::class);

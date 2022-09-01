@@ -11,5 +11,10 @@ as all details can be modified in one place.
 
 ::: tip Annotating vs. Annotations
 When talking about annotating your code we mean the act of adding meta-data to your codebase. This can be done by
-either adding [`Annotations`](attributes.md) or [`Attributes`](annotations.md).
+either adding [`Annotations`](annotations.md) or [`Attributes`](attributes.md).
+:::
+
+::: warning Requirements
+Using `swagger-php` requires a minimum of **PHP&nbsp;7.2** for using annotations and
+at least **PHP&nbsp;8.1** to use attributes.
 :::

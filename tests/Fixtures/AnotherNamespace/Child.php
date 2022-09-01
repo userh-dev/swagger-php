@@ -8,15 +8,16 @@ namespace AnotherNamespace;
 
 use OpenApi\Tests\Fixtures\ExpandClasses\Ancestor;
 
+use OpenApi\Annotations as OA;
+
 /**
- * @OA\Schema()
+ * @OA\Schema
  */
 class Child extends Ancestor
 {
-
     /**
      * @var bool
-     * @OA\Property()
+     * @OA\Property
      */
     public $isBaby;
 }
